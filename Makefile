@@ -1,10 +1,12 @@
+all: cmake build
+
+clean:
+	rm -rf build
+
 cmake:
-	mkdir build && cd build && cmake -G"Ninja" ..
+	mkdir -p build && cd build && cmake -G"Unix Makefiles" ..
 
 build:
 	cd build && ninja
-
-e_00: build
-	cd build && ./example_00
 
 .PHONY: build

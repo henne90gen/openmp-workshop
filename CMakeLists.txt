@@ -2,8 +2,7 @@ cmake_minimum_required(VERSION 3.13)
 
 project(openmp-workshop)
 
-find_package(OpenMP)
-
+find_package(OpenMP REQUIRED)
 
 file(GLOB FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cpp")
 foreach (FILE ${FILES})
