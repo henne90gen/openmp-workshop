@@ -63,6 +63,14 @@
 
 ## Practical Examples
 
+### Things to look out for
+
+- hardest part is getting the algorithm and data into a form that can be parallelized
+  - thinking in independent loop iterations helps with this
+- Windows compiler does not support newest version of OpenMP
+  - can only parallelize loops that have the form `for (int i = 0; i < …; i++) {`
+  - does not support reduction
+
 ### Image Processing
 
 - simple `*.bmp` reader
