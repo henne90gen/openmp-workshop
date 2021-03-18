@@ -44,6 +44,10 @@ struct BmpFile {
 };
 #pragma pack(pop)
 
+uint32_t getRowSize(uint32_t width, uint32_t bitsPerPixel) {
+  return static_cast<int>(std::ceil((bitsPerPixel * width) / 32)) * 4;
+}
+
 std::ostream &operator<<(std::ostream &os, BmpFile &f) {
   size_t fileHeaderSize = sizeof(f.fileHeader);
   size_t infoHeaderSize = sizeof(f.infoHeader);
@@ -56,8 +60,6 @@ std::ostream &operator<<(std::ostream &os, BmpFile &f) {
 
 bool writeBmp(const Image &image) {
   BmpFileHeader fileHeader = {};
-  fileHeader.fileSizeInBytes =
-      fileHeader.pixelOffset + image.width * image.height * image.channels;
 
   BmpInfoHeader infoHeader = {};
   infoHeader.width = image.width;
@@ -66,45 +68,14 @@ bool writeBmp(const Image &image) {
   infoHeader.yPixelsPerM = 0;
   infoHeader.colorsUsed = 0;
 
-  int rowSize = static_cast<int>(
-                    std::ceil((infoHeader.bitsPerPixel * image.width) / 32)) *
-                4;
-  uint8_t *pBuf = nullptr;
-  if (rowSize == image.width * 3) {
-    pBuf = const_cast<uint8_t *>(image.pixels.data());
-  } else {
-    // we have to create a copy of the pixels to account for additional padding
-    // that is necessary at the end of each pixel row
+  int rowSize = getRowSize(image.width, infoHeader.bitsPerPixel);
+  fileHeader.fileSizeInBytes = fileHeader.pixelOffset + image.height * rowSize;
 
-    int pixelsSize = rowSize * image.height;
-    pBuf = reinterpret_cast<uint8_t *>(std::malloc(pixelsSize));
-    std::memset(pBuf, 0, pixelsSize);
-
-#if 0
-#pragma omp parallel for
-    for (int row = 0; row < image.height; row++) {
-      int pBufRowIndex = row * rowSize;
-      int pixelsRowIndex = row * image.width;
-      memcpy(pBuf + pBufRowIndex, image.pixels.data() + pixelsRowIndex,
-             image.width * 3);
-    }
-#else
-    for (int row = 0; row < image.height; row++) {
-      for (int col = 0; col < image.width; col++) {
-        int pBufIndex = row * rowSize + col * 3;
-        int pixelsIndex = (row * image.width + col) * 3;
-        pBuf[pBufIndex + 0] = image.pixels[pixelsIndex + 0];
-        pBuf[pBufIndex + 1] = image.pixels[pixelsIndex + 1];
-        pBuf[pBufIndex + 2] = image.pixels[pixelsIndex + 2];
-      }
-    }
-#endif
-  }
-
+  const auto pBuf = const_cast<uint8_t *>(image.pixels.data());
   BmpFile bmpFile = {
-      fileHeader,
-      infoHeader,
-      pBuf,
+      .fileHeader = fileHeader,
+      .infoHeader = infoHeader,
+      .pixels = pBuf,
   };
 
   std::ofstream file(image.fileName, std::ios::binary);
@@ -115,7 +86,7 @@ bool writeBmp(const Image &image) {
 std::istream &operator>>(std::istream &is, BmpFile &f) {
   is.read(reinterpret_cast<char *>(&f.fileHeader), sizeof(f.fileHeader));
   is.read(reinterpret_cast<char *>(&f.infoHeader), sizeof(f.infoHeader));
-  int diff = f.infoHeader.size - sizeof(BmpInfoHeader);
+  int64_t diff = f.infoHeader.size - sizeof(BmpInfoHeader);
   if (diff > 0) {
     is.seekg(diff, std::ios_base::cur);
   }
@@ -135,31 +106,9 @@ bool readBmp(Image &image) {
   image.height = bmpFile.infoHeader.height;
   image.channels = bmpFile.infoHeader.bitsPerPixel / 8;
 
-  int rowSize = static_cast<int>(std::ceil(
-                    (bmpFile.infoHeader.bitsPerPixel * image.width) / 32)) *
-                4;
-  if (rowSize == image.width * 3) {
-    unsigned int pixelSize = image.width * image.height * image.channels;
-    image.pixels =
-        std::vector<uint8_t>(bmpFile.pixels, bmpFile.pixels + pixelSize);
-  } else {
-    // we have to create a copy of the pixels to account for additional padding
-    // that is necessary at the end of each pixel row
-
-    int pixelsSize = rowSize * image.height;
-    image.pixels =
-        std::vector<uint8_t>(image.width * image.height * image.channels);
-
-    for (int row = 0; row < image.height; row++) {
-      for (int col = 0; col < image.width; col++) {
-        int pBufIndex = row * rowSize + col * 3;
-        int pixelsIndex = (row * image.width + col) * 3;
-        image.pixels[pixelsIndex + 0] = bmpFile.pixels[pBufIndex + 0];
-        image.pixels[pixelsIndex + 1] = bmpFile.pixels[pBufIndex + 1];
-        image.pixels[pixelsIndex + 2] = bmpFile.pixels[pBufIndex + 2];
-      }
-    }
-  }
+  unsigned int pixelSize = image.width * image.height * image.channels;
+  image.pixels =
+      std::vector<uint8_t>(bmpFile.pixels, bmpFile.pixels + pixelSize);
 
   return true;
 }
