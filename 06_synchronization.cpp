@@ -45,11 +45,11 @@ void with_sync_reduction() {
 /**
  * Different methods of synchronization are available:
  *
- * barrier: waits until all threads have reached the barrier before resuming
+ * - barrier: waits until all threads have reached the barrier before resuming
  *          execution
- * critical: creates locks around this section, thus ensuring it is only entered
- *           by one thread at the same time
- * reduction: automatically ensures that the specified reduction operation is
+ * - critical: creates locks around this section, thus ensuring it is only
+ *             entered by one thread at the same time
+ * - reduction: automatically ensures that the specified reduction operation is
  *            thread safe
  */
 int main() {

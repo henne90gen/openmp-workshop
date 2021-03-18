@@ -39,6 +39,36 @@
     - guided: [image](guided_scheduling.png)
     - auto: compiler and/or runtime system decides
     - runtime: schedule and chunk size are decided at runtime by Internal Control Variables
+
 ### Parallel Sections
 
 - `#pragma omp parallel sections`
+- each `section` inside of `sections` is executed in parallel
+
+### Locks
+
+- changes the way execution is parallelized for parts of the code in the parallel region
+- `single`: code is executed on a single thread only, instead of all of the threads in the parallel region
+- `master`: code is executed on the master thread only
+- `critical`: code inside this scope is executed sequentially
+
+### Synchronization
+
+- these constructs synchronize between multiple threads of execution
+- `barrier`: only continues execution after all threads have reached that point
+- `critical`: ensures only one thread executes the block of code at a time
+- `reduction`: allows efficient parallel reduction operations, like sum, difference, min or max
+
+
+
+## Practical Examples
+
+### Image Processing
+
+- simple `*.bmp` reader
+- large image files can be processed much faster in parallel
+
+### Marching Cubes
+
+- TODO add explanation of algorithm
+- TODO add explanation on how to parallelize it with omp
