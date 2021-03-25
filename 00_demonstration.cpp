@@ -1,5 +1,6 @@
 #include <chrono>
 #include <iostream>
+#include <vector>
 
 /**
  * Simple demonstration of the OpenMP concept.
@@ -27,7 +28,7 @@ int main() {
               << std::endl;
     auto start = std::chrono::high_resolution_clock::now();
 
-#pragma omp parallel for shared(iterationCount) default(none)
+#pragma omp parallel for
     for (long i = 0; i < iterationCount; i++) {
       long j = i * 5;
     }

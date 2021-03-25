@@ -118,11 +118,12 @@ void edit_image(Image &image) {
   for (int i = 0; i < image.height * image.height; i++) {
     image.pixels[i * 3 + 0] -= 0;
     image.pixels[i * 3 + 1] -= 0;
-    image.pixels[i * 3 + 2] -= 50;
+    image.pixels[i * 3 + 2] -= 1;
   }
 }
 
 int main() {
+#if 1
   Image image = {.fileName = "../test.bmp"};
   readBmp(image);
 
@@ -133,5 +134,21 @@ int main() {
 
   image.fileName = "../test_result.bmp";
   writeBmp(image);
+
+#else
+
+  Image image = {.fileName = "../wallpaper.bmp"};
+  readBmp(image);
+  std::cout << "Read image with size " << image.width << "x" << image.height
+            << std::endl;
+
+  for (int i = 0; i < 100; i++) {
+    edit_image(image);
+  }
+
+  image.fileName = "../wallpaper_result.bmp";
+  writeBmp(image);
+
+#endif
   return 0;
 }
